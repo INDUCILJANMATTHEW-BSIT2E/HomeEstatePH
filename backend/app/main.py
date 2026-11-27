@@ -4,6 +4,14 @@ from app.database import Base, engine
 from app import models  # noqa: F401  (registers the tables)
 
 app = FastAPI(title="HomeEstatePH API")
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 from app.routers.auth import router as auth_router
 app.include_router(auth_router)
 from app.routers.properties import router as properties_router
