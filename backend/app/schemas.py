@@ -18,3 +18,12 @@ class PropertyCreate(BaseModel):
     address: str
     latitude: float | None = None
     longitude: float | None = None
+class PropertyUpdate(BaseModel):
+    type_id: int | None = None
+    title: str | None = Field(default=None, min_length=3, max_length=180)
+    description: str | None = None
+    price: float | None = Field(default=None, gt=0)
+    city: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None

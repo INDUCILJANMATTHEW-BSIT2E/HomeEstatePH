@@ -5,6 +5,8 @@ from app import models  # noqa: F401  (registers the tables)
 app = FastAPI(title="HomeEstatePH API")
 from app.routers.auth import router as auth_router
 app.include_router(auth_router)
+from app.routers.properties import router as properties_router
+app.include_router(properties_router)
 Base.metadata.create_all(bind=engine)
 
 @app.get("/")
