@@ -1,4 +1,5 @@
-from sqlalchemy import String, Float, Integer, Text, ForeignKey
+from datetime import datetime
+from sqlalchemy import String, Float, Integer, Text, ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
@@ -28,3 +29,10 @@ class Property(Base):
     latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="pending")
+
+class PropertyImage(Base):
+    __tablename__ = "property_images"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    property_id: Mapped[int] = mapped_column(ForeignKey("properties.id"))
+    file_path: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

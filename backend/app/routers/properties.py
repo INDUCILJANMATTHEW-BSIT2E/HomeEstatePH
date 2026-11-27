@@ -1,3 +1,12 @@
+import uuid
+from pathlib import Path
+from fastapi import UploadFile, File
+from app.models import PropertyImage
+
+UPLOAD_DIR = Path("uploads")
+ALLOWED = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
+SIGNATURES = {".jpg": b"\xff\xd8\xff", ".png": b"\x89PNG\r\n\x1a\n", ".webp": b"RIFF"}
+MAX_BYTES = 5 * 1024 * 1024
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -59,3 +68,36 @@ def delete_property(property_id: int, db: Session = Depends(get_db),
         raise HTTPException(403, "Not allowed")
     db.delete(item); db.commit()
     return {"deleted": True}
+
+@router.post("/{property_id}/images")
+async def upload_image(property_id: int, file: UploadFile = File(...),
+                       db: Session = Depends(get_db),
+                       user: User = Depends(get_current_user)):
+    item = db.get(Property, property_id)
+    if not item:
+        raise HTTPException(404, "Property not found")
+    if not can_manage(user, item):
+        raise HTTPException(403, "Not allowed")
+    ext = ALLOWED.get(file.content_type)
+    if not ext:
+        raise HTTPException(415, "Only JPEG, PNG or WebP images")
+    UPLOAD_DIR.mkdir(exist_ok=True)
+    name = f"{uuid.uuid4().hex}{ext}"
+    dest = UPLOAD_DIR / name
+    size, first = 0, True
+    try:
+        with open(dest, "wb") as out:
+            while chunk := await file.read(1024 * 1024):
+                if first and not chunk.startswith(SIGNATURES[ext]):
+                    raise HTTPException(415, "File content does not match its type")
+                first = False
+                size += len(chunk)
+                if size > MAX_BYTES:
+                    raise HTTPException(413, "File too large (max 5 MB)")
+                out.write(chunk)
+    except HTTPException:
+        dest.unlink(missing_ok=True)
+        raise
+    db.add(PropertyImage(property_id=item.id, file_path=name))
+    db.commit()
+    return {"url": f"/uploads/{name}"}
