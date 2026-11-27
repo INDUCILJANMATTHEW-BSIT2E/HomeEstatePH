@@ -20,8 +20,19 @@ def can_manage(user: User, item: Property) -> bool:
     return user.role == "admin" or item.owner_id == user.id
 
 @router.get("")
-def list_properties(db: Session = Depends(get_db)):
-    return db.query(Property).filter(Property.status == "approved").all()
+def list_properties(city: str | None = None, type_id: int | None = None,
+                    min_price: float | None = None, max_price: float | None = None,
+                    db: Session = Depends(get_db)):
+    q = db.query(Property).filter(Property.status == "approved")
+    if city:
+        q = q.filter(Property.city.ilike(f"%{city}%"))
+    if type_id:
+        q = q.filter(Property.type_id == type_id)
+    if min_price is not None:
+        q = q.filter(Property.price >= min_price)
+    if max_price is not None:
+        q = q.filter(Property.price <= max_price)
+    return q.limit(50).all()
 
 @router.post("")
 def create_property(data: PropertyCreate, db: Session = Depends(get_db),
