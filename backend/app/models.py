@@ -2,6 +2,7 @@ from datetime import datetime
 from sqlalchemy import String, Float, Integer, Text, ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
+from sqlalchemy import UniqueConstraint
 
 class User(Base):
     __tablename__ = "users"
@@ -35,4 +36,21 @@ class PropertyImage(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     property_id: Mapped[int] = mapped_column(ForeignKey("properties.id"))
     file_path: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+class Favorite(Base):
+    __tablename__ = "favorites"
+    __table_args__ = (UniqueConstraint("user_id", "property_id"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    property_id: Mapped[int] = mapped_column(ForeignKey("properties.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+class Inquiry(Base):
+    __tablename__ = "inquiries"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    property_id: Mapped[int] = mapped_column(ForeignKey("properties.id"))
+    customer_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    message: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), default="new")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

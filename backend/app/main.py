@@ -2,8 +2,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
 from app.database import Base, engine
 from app import models  # noqa: F401  (registers the tables)
+from app.routers.engagement import router as engagement_router
 
 app = FastAPI(title="HomeEstatePH API")
+app.include_router(engagement_router)
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
